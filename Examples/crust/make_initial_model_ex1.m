@@ -42,6 +42,11 @@
 % this is a script
 clear all
 
+file_path = 'input_files';
+if ~isfolder(file_path)
+    mkdir(file_path);
+end
+
 % low end of acceptable chi-squared window
 chilo = 1;
 % high end of acceptable chi-squared window
@@ -55,7 +60,7 @@ smscl = 1000;
 % flag for if Vp/Vs ratio is fixed (1) or not (0) 
 pratioflag = 1;
 % number of frequency measurements
-Nf = length(load('velocity_values.txt')); 
+Nf = length(load(fullfile(file_path,'velocity_values.txt'))); 
 
 % construct a grid in solid
 Nn = 240;                   % number of elements in solid
@@ -82,7 +87,7 @@ rhovf = rholay4*ones(1,Nnf);
     
 
 % write out input parameters file
-fidt = fopen('input_params.txt','w');
+fidt = fopen(fullfile(file_path,'input_params.txt'),'w');
 fprintf(fidt,'%% input parameters for Rayleigh/Scholte wave inversion\n');
 fprintf(fidt,'\n');
 fprintf(fidt,'%i  %% flag for fixed poisson''s ratio (0=no,1=yes)\n',pratioflag);
@@ -98,13 +103,13 @@ fclose(fidt);
 
 % write out Vp model in single column format
 if (pratioflag == 1)
-    fid = fopen('vp_init.txt','w');
+    fid = fopen(fullfile(file_path,'vp_init.txt'),'w');
     for ii=1:1
         fprintf(fid,'%10.5f\n',vpvsr);
     end
     fclose(fid); 
 else
-    fid = fopen('vp_init.txt','w');
+    fid = fopen(fullfile(file_path,'vp_init.txt'),'w');
     for ii=1:length(vpv)
         fprintf(fid,'%10.5f\n',vpv(ii));
     end
@@ -112,46 +117,43 @@ else
 end
 
 % write out Vs model in single column format
-fid = fopen('vs_init.txt','w');
+fid = fopen(fullfile(file_path,'vs_init.txt'),'w');
 for ii=1:length(vsv)
     fprintf(fid,'%10.5f\n',vsv(ii));
 end
 fclose(fid); 
 
 % write out density model in single column format
-fid = fopen('rho_init.txt','w');
+fid = fopen(fullfile(file_path,'rho_init.txt'),'w');
 for ii=1:length(rhov)
     fprintf(fid,'%10.5f\n',rhov(ii));
 end
 fclose(fid); 
 
 % write out Vp model in fluid in single column format
-fid = fopen('vpf.txt','w');
+fid = fopen(fullfile(file_path,'vpf.txt'),'w');
 for ii=1:length(vpvf)
     fprintf(fid,'%10.5f\n',vpvf(ii));
 end
 fclose(fid);    
 
 % write out density model in fluid in single column format
-fid = fopen('rhof.txt','w');
+fid = fopen(fullfile(file_path,'rhof.txt'),'w');
 for ii=1:length(rhovf)
     fprintf(fid,'%10.5f\n',rhovf(ii));
 end
 fclose(fid); 
 
 % write out element thicknesses in solid in single column format
-fid = fopen('grid_values_solid.txt','w');
+fid = fopen(fullfile(file_path,'grid_values_solid.txt'),'w');
 for ii=1:Nn
     fprintf(fid,'%10.5f\n',h(ii));
 end
 fclose(fid);
 
 % write out element thicknesses in fluid in single column format
-fid = fopen('grid_values_fluid.txt','w');
+fid = fopen(fullfile(file_path,'grid_values_fluid.txt'),'w');
 for ii=1:Nnf
     fprintf(fid,'%10.5f\n',hfv(ii));
 end
 fclose(fid);
-
-
-

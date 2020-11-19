@@ -36,6 +36,8 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+addpath('/Users/dmikesell/GIT/raylee_codes/src');
+
 % this is a script
 clear all
 

@@ -32,6 +32,10 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+file_path = 'figures';
+if ~isfolder(file_path)
+    mkdir(file_path);
+end
 
 % parameters
 vpvsr = 1.7321;
@@ -60,7 +64,7 @@ ylabel(' Velocity (m/s) '); xlabel(' Frequency (Hz) ');
 title(' Data (blue), initial guess (red), and final update (black) ');
 
 orient landscape
-print(gcf,'-dpsc','Data_space_noh2olyr.ps');
+print(gcf,'-dpng','-r300',fullfile(file_path,'data.png'));
 
 % plot model comparisons
 figure
@@ -75,7 +79,7 @@ ylabel(' Depth (km) '); xlabel(' Shear velocity (m/s) ');
 title(' True (blue) and initial models (red), and final update (black) ');
 
 orient landscape
-print(gcf,'-dpsc','Model_space_noh2olyr.ps');
+print(gcf,'-dpng','-r300',fullfile(file_path,'model.png'));
 
 % sensitivity kernel of final update
 figure
@@ -106,6 +110,6 @@ xlabel(' Frequency (Hz) '); ylabel(' Depth (km) ');
 title(' V_{S} kernel for first overtone ')
 
 orient landscape
-print(gcf,'-dpsc','Kernel_noh2olyr.ps');
+print(gcf,'-dpng','-r300',fullfile(file_path,'depth_kernel.png'));
 
 

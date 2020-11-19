@@ -90,6 +90,8 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+
 % this is a script
 clear all
 
@@ -100,29 +102,31 @@ tic
 % begin input
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+file_path = 'input_files';
+
 % data file of frequencies
-ffil = sprintf('frequency_values.txt');
+ffil = sprintf(fullfile(file_path,'frequency_values.txt'));
 % data file of velocities at each frequency
-ifil = sprintf('velocity_values.txt');
+ifil = sprintf(fullfile(file_path,'velocity_values.txt'));
 % data file of velocity error bars at each frequency
-efil = sprintf('velocity_values_errs.txt');
+efil = sprintf(fullfile(file_path,'velocity_values_errs.txt'));
 % data file of mode number at each frequency
-mfil = sprintf('mode_values.txt');
+mfil = sprintf(fullfile(file_path,'mode_values.txt'));
 % data file of mode number at each frequency
-vfil = sprintf('vtype_values.txt');
+vfil = sprintf(fullfile(file_path,'vtype_values.txt'));
 % data file of element thicknesses
-gfil = sprintf('grid_values_solid.txt');
+gfil = sprintf(fullfile(file_path,'grid_values_solid.txt'));
 % data file of element thicknesses
-gffil = sprintf('grid_values_fluid.txt');
+gffil = sprintf(fullfile(file_path,'grid_values_fluid.txt'));
 % data file of input parameters
-nprm = sprintf('input_params.txt');
+nprm = sprintf(fullfile(file_path,'input_params.txt'));
 % data files of initial model guess 
-vpinit = sprintf('vp_init.txt');
-vsinit = sprintf('vs_init.txt');
-rhoinit = sprintf('rho_init.txt');
+vpinit = sprintf(fullfile(file_path,'vp_init.txt'));
+vsinit = sprintf(fullfile(file_path,'vs_init.txt'));
+rhoinit = sprintf(fullfile(file_path,'rho_init.txt'));
 % data files of water layer
-vpf = sprintf('vpf.txt');
-rhof = sprintf('rhof.txt');
+vpf = sprintf(fullfile(file_path,'vpf.txt'));
+rhof = sprintf(fullfile(file_path,'rhof.txt'));
 
 % load input parameters
 inp = load(nprm);

@@ -42,6 +42,11 @@
 % this is a script
 clear all
 
+file_path = 'input_files';
+if ~isfolder(file_path)
+    mkdir(file_path);
+end
+
 % construct a grid in solid
 Nn = 240;                   % number of elements in solid
 h = 250*ones(1,Nn);             % grid spacing of mesh (meters)
@@ -141,38 +146,36 @@ modnv = modnvn;
 vtypv = vtypvn;
 
 % write out phase or group velocities
-fid = fopen('velocity_values.txt','w');
+fid = fopen(fullfile(file_path,'velocity_values.txt'),'w');
 for ii=1:Nf
     fprintf(fid,'%10.5f\n',vout(ii));
 end
 fclose(fid);
 
 % write out velocity error bars in single column format
-fid = fopen('velocity_values_errs.txt','w');
+fid = fopen(fullfile(file_path,'velocity_values_errs.txt'),'w');
 for ii=1:Nf
 	fprintf(fid,'%10.5f\n',vout(ii)*.025);
 end
 fclose(fid);
 
 % write out frequencies in single column format
-fid = fopen('frequency_values.txt','w');
+fid = fopen(fullfile(file_path,'frequency_values.txt'),'w');
 for ii=1:Nf
     fprintf(fid,'%10.5f\n',fks(ii));
 end
 fclose(fid);
 
 % write out new variable modnv in single column format
-fid = fopen('mode_values.txt','w');
+fid = fopen(fullfile(file_path,'mode_values.txt'),'w');
 for ii=1:Nf
     fprintf(fid,'%10.5f\n',modnv(ii));
 end
 fclose(fid);
 
 % write out new variable vtype in single column format
-fid = fopen('vtype_values.txt','w');
+fid = fopen(fullfile(file_path,'vtype_values.txt'),'w');
 for ii=1:Nf
     fprintf(fid,'%10.5f\n',vtypv(ii));
 end
 fclose(fid);
-
-
