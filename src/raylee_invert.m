@@ -559,14 +559,18 @@ function [gfil, gffil, nprm, vpinit, vsinit, rhoinit, vpf, rhof] = get_model_fil
 
 % data file of element thicknesses
 gfil = sprintf(fullfile(file_path,'grid_values_solid.txt'));
+
 % data file of element thicknesses
 gffil = sprintf(fullfile(file_path,'grid_values_fluid.txt'));
+
 % data file of input parameters
 nprm = sprintf(fullfile(file_path,'input_params.txt'));
+
 % data files of initial model guess
 vpinit = sprintf(fullfile(file_path,'vp_init.txt'));
 vsinit = sprintf(fullfile(file_path,'vs_init.txt'));
 rhoinit = sprintf(fullfile(file_path,'rho_init.txt'));
+
 % data files of water layer
 vpf = sprintf(fullfile(file_path,'vpf.txt'));
 rhof = sprintf(fullfile(file_path,'rhof.txt'));

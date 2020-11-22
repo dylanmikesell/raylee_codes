@@ -56,19 +56,19 @@ df   = 0.01;                      % frequency spacing (Hz)
 fks  = fmin + (df*[0:(Nf-1)]);     % vector of frequencies (Hz)
 % these are the frequencies at which the velocities are measured
 
-% model 2 modes, 1 fundamental and 1st higher mode
-Nf = 2*Nf;
-% vector of mode numbers
-modnv = [ones(1,Nf/2) 2*ones(1,Nf/2)];
-% try to model over same frequencies
-fks = [fks fks];
+% % model 2 modes, 1 fundamental and 1st higher mode
+% Nf = 2*Nf;
+% % vector of mode numbers
+% modnv = [ones(1,Nf/2) 2*ones(1,Nf/2)];
+% % try to model over same frequencies
+% fks = [fks fks];
 
 % % model 1 mode, 1 fundamental
 % % vector of mode numbers
-% modnv = ones(1,Nf);
+modnv = ones(1,Nf);
 
 % what type of velocity - phase (0) or group (1)?
-vtypv = zeros(1, Nf);
+vtypv = ones(1, Nf);
 
 %% Make the vertial finite-element model
 

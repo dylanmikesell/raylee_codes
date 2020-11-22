@@ -39,18 +39,28 @@ end
 
 % parameters
 vpvsr = 1.7321;
+
 % make a three layered model
 layrth1 = 5; % thickness in elements, layrth1*h = thickness in meters
 layrth2 = 10; % thickness in elements, layrth2*h = thickness in meters
 layrth3 = 50;
+
 % the true model
-vplay1 = 4000; vslay1 = vplay1/vpvsr; 
-vplay2 = 3396; vslay2 = vplay2/vpvsr; 
-vplay3 = 4500; vslay3 = vplay3/vpvsr; 
-vplay4 = 6000; vslay4 = vplay4/vpvsr; 
-vsv_true = [vslay1*ones(1,layrth1) vslay2*ones(1,layrth2) ...
+vplay1 = 4000; 
+vslay1 = vplay1/vpvsr; 
+vplay2 = 3396; 
+vslay2 = vplay2/vpvsr; 
+vplay3 = 4500; 
+vslay3 = vplay3/vpvsr; 
+vplay4 = 6000; 
+vslay4 = vplay4/vpvsr; 
+
+vsv_true = [...
+    vslay1*ones(1,layrth1)...
+    vslay2*ones(1,layrth2) ...
     vslay3*ones(1,layrth3) ...
-       vslay4*ones(1,(Nn-(layrth1+layrth2+layrth3)))];
+    vslay4*ones(1,(Nn-(layrth1+layrth2+layrth3)))...
+    ];
 
 % plot data comparisons   
 figure

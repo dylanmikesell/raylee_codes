@@ -31,6 +31,9 @@ make_initial_model_ex1
 % input_params.txt          See description below
 
 
+% This is where you would insert a loop and update the input data each
+% time. Then move the output files for building the 3D model!
+
 % Run the inversion 
 raylee_invert  % this file is in the src/ directory
 % Right now this does not write a solution to file. Instead everything is
