@@ -91,18 +91,20 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+% 
+% % this is a script
+% clear all
+% 
+% % time this
+% tic
 
-% this is a script
-clear all
-
-% time this
-tic
+function raylee_invert
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % begin input
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-file_path = 'input_files';
+file_path = 'raylee_input_files';
 
 % Get the data "PATH/files"
 [ifil, efil, ffil, mfil, vfil] = get_data_files(file_path);
@@ -190,7 +192,7 @@ end
 % prepare for initial inversion step
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-output_path = 'output_files';
+output_path = 'raylee_output_files';
 if ~isfolder(output_path)
     mkdir(output_path);
 end
@@ -237,6 +239,7 @@ else
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % invert using damped least squares method of Tarantola and Valette (1982)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    fprintf('\nRunning the damped least-squares inversion.\n');
     
     % initial damped linear inversion
     dvs = linvers(U_datar,Ur,snsmf_vstotr,mcmisr,dcmisr,Nn,vsv,vsv_guess);
@@ -277,7 +280,9 @@ else
     while ((chisqurdp >= chisqurd(1) && nreds < nupds) || ...
             ((chisqurdp/Nfr) < 1 && nreds < nupds))
         
-        nreds = nreds + 1
+        fprintf('Chi2 increased. Reducing step size by factor of 2.\n');
+        nreds = nreds + 1;
+        fprintf('Reduction number: %d\n', nreds);
         
         % reduce step by a factor of 2, and add it in
         dvs = dvs/2;
@@ -327,7 +332,8 @@ else
     end
     
     % the updated model, print number of update to screen
-    nupdat = 1
+    nupdat = 1;
+    fprintf('\nModel update (nupdat): %d\n', nupdat);
     vsv_update(nupdat,:) = vsv;
     
     % the rms of this update
@@ -373,6 +379,7 @@ Nfrv(nupdat+1) = Nfr;
 
 % while the stopping criterion and the maximum
 % allowed number of iterations has not been met, continue updating
+fprintf('\nNow running iterative inversion step.\n');
 while ((chisqurdp/Nfr) > chihi && nupdat < nupds )
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -419,10 +426,13 @@ while ((chisqurdp/Nfr) > chihi && nupdat < nupds )
     % the gradient - difference between the current update and previous
     dvs = (vsv' - transpose(vsv_update(nupdat,:)));
     
+    % Check chi2
     while ((chisqurdp >= 1.01*chisqurd(nupdat+1) && nreds < nupds) || ...
             ((chisqurdp/Nfr) < chilo && nreds < nupds))
         
-        nreds = nreds + 1
+        fprintf('Chi2 increased. Reducing step size by factor of 2.\n');
+        nreds = nreds + 1;
+        fprintf('Reduction number: %d\n', nreds);
         
         % reduce step by a factor of 2, and add it in
         dvs = dvs/2;
@@ -474,7 +484,8 @@ while ((chisqurdp/Nfr) > chihi && nupdat < nupds )
     end
     
     % the next updated model, print number of update to screen
-    nupdat = nupdat + 1
+    nupdat = nupdat + 1;
+    fprintf('\nModel update (nupdat): %d\n', nupdat);
     vsv_update(nupdat,:) = vsv;
     
     % the rms of this update
@@ -518,10 +529,10 @@ end
 % Save the final dispersion data model
 save_disp_model(U,fks,output_path,'final');
 % Save the final Vs model
-save_vs_model(vsv_update(nupdat,:), hss, output_path, 'final')
+save_vs_model(vsv_update(nupdat,:), hss, output_path, 'final');
 
 % end the timer
-toc
+% toc
 
 sprintf('%d of %d measurements used',Nfr,Nf-sum(isnan(U_data)))
 
@@ -535,6 +546,7 @@ if ((chisqurd(nupdat+1)/Nfr) < chilo)
 else
 end
 
+end
 
 
 %% Functions
