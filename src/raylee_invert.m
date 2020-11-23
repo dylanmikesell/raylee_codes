@@ -166,27 +166,19 @@ end
 % check whether input parameters are physically possible
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% density greater than zero
-if (sum(rhov <= 0) > 0)
-    error('Negative density values exist in initial guess');
-else
-end
-% shear velocity greater than zero
-if (sum(vsv <= 0) > 0)
-    error('Negative shear velocity values exist in initial guess');
-else
-end
-% poisson's ratio between two bounds
+assert( sum(rhov <= 0) == 0, ... % density greater than zero in solid
+    'Negative density values exist in initial guess (solid).');
+assert( sum(rhofv <= 0) == 0, ... % density greater than zero in fluid
+    'Negative density values exist in initial guess (fluid).');
+assert( sum(vsv <= 0) == 0, ... % shear velocity greater than zero
+    'Negative shear velocity values exist in initial guess.');
+
+% assert that poisson's ratio is between two bounds
 pratio = (vpv.^2 - 2*(vsv.^2))./(2*(vpv.^2 - vsv.^2));
-if ((sum(pratio <= -1) > 0) || (sum(pratio >= 0.5) > 0))
-    error('Impossible Poisson ratio values exist in initial guess');
-else
-end
-% density greater than zero in fluid
-if (sum(rhofv <= 0) > 0)
-    error('Negative density values exist in initial guess');
-else
-end
+assert( sum(pratio >= 0.5) == 0, ... % upper bound
+    'Impossible HIGH Poisson ratio values encountered in inversion');
+assert( sum(pratio <= -1) == 0, ... % lower bound
+    'Impossible LOW Poisson ratio values encountered in inversion');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % prepare for initial inversion step
@@ -229,38 +221,79 @@ rmserror(1) = sqrt(mean(((U_guess-U_datar)./1).^2));
 chisqurd(1) = (U_guess-U_datar)*dcmisr*dcmisr*transpose(U_guess-U_datar);
 Nfrv(1) = Nfr;
 
-% check to see if initial guess has chi^2 less than 1
-if ((chisqurd(1)/Nfr) < chilo)
-    error('Initial model fits data to less than 1 chi-squared');
-elseif ((chisqurd(1)/Nfr) < chihi)
-    error('Initial model fits data within acceptable chi-squared window');
+% assert that initial guess chi^2 must be larger than 1
+assert( (chisqurd(1)/Nfr) > chilo, ...
+    'Initial model fits data to less than 1 chi-squared');
+% assert that initial guess chi^2 must be larger than chihi window
+assert( (chisqurd(1)/Nfr) > chihi, ...
+    'Initial model fits data within acceptable chi-squared window');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% invert using damped least squares method of Tarantola and Valette (1982)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+fprintf('\nRunning the damped least-squares inversion.\n');
+
+% initial damped linear inversion
+dvs = linvers(U_datar,Ur,snsmf_vstotr,mcmisr,dcmisr,Nn,vsv,vsv_guess);
+
+% add to the initial model
+vsv = dvs' + vsv_guess;
+if (pratioflag == 1)
+    vpv = vpvsratio*vsv;
 else
+end
+
+% compute new sensitivity kernel
+[U, snsmf_vstot] = raylee_sensitivity(Nn,vsv,vpv,...
+    rhov,fksr,h,modnr,vflgr,...
+    Nnf,vpfv,rhofv,hfv,pratioflag);
+
+% find NaNs
+[U, U_datar, fksr, fksri, modnr, vflgr, snsmf_vstot] = ...
+    check_nans(U, U_datar, fksr, modnr, vflgr, snsmf_vstot);
+
+% if number of NaNs changed, recompute data and model covariances
+if (length(fksr) ~= Nfr)
+    Nfr = length(fksr);
+    msigma = mean(U_data_errs(fksri))*msigmaf;
+    mcm = (msigma^2)*exp(-abs(repmat(hs,Nn,1)-repmat(hs',1,Nn))/lsmth);
+    mcmisr = sqrtm(inv(mcm));
+    dcm = diag(U_data_errs(fksri).^2);
+    dcmisr = diag(1./U_data_errs(fksri));
+else
+end
+
+% compute RMS error and chi-squared
+rmserrorp = sqrt(mean(((U-U_datar)./1).^2));
+chisqurdp = (U-U_datar)*dcmisr*dcmisr*transpose(U-U_datar);
+
+% a reduced line search if chi^2 of update is not lower than before
+nreds = 0;
+while ((chisqurdp >= chisqurd(1) && nreds < nupds) || ...
+        ((chisqurdp/Nfr) < 1 && nreds < nupds))
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % invert using damped least squares method of Tarantola and Valette (1982)
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    fprintf('\nRunning the damped least-squares inversion.\n');
+    fprintf('Chi2 increased. Reducing step size by factor of 2.\n');
+    nreds = nreds + 1;
+    fprintf('Reduction number: %d\n', nreds);
     
-    % initial damped linear inversion
-    dvs = linvers(U_datar,Ur,snsmf_vstotr,mcmisr,dcmisr,Nn,vsv,vsv_guess);
-    
-    % add to the initial model
-    vsv = dvs' + vsv_guess;
+    % reduce step by a factor of 2, and add it in
+    dvs = dvs/2;
+    vsv = vsv_guess + dvs';
     if (pratioflag == 1)
         vpv = vpvsratio*vsv;
     else
     end
     
-    % compute new sensitivity kernel
+    % call the sensitivity function to compute U
     [U, snsmf_vstot] = raylee_sensitivity(Nn,vsv,vpv,...
         rhov,fksr,h,modnr,vflgr,...
         Nnf,vpfv,rhofv,hfv,pratioflag);
     
-    % find NaNs
+    % check for NaNs
     [U, U_datar, fksr, fksri, modnr, vflgr, snsmf_vstot] = ...
         check_nans(U, U_datar, fksr, modnr, vflgr, snsmf_vstot);
     
-    % if number of NaNs changed, recompute data and model covariances
+    % if number of NaNs changed recompute data and model covariances
     if (length(fksr) ~= Nfr)
         Nfr = length(fksr);
         msigma = mean(U_data_errs(fksri))*msigmaf;
@@ -271,79 +304,37 @@ else
     else
     end
     
-    % compute RMS error and chi-squared
+    % the rms of this potential update
     rmserrorp = sqrt(mean(((U-U_datar)./1).^2));
+    % the chi^2 of this potential update
     chisqurdp = (U-U_datar)*dcmisr*dcmisr*transpose(U-U_datar);
-    
-    % a reduced line search if chi^2 of update is not lower
-    nreds = 0;
-    while ((chisqurdp >= chisqurd(1) && nreds < nupds) || ...
-            ((chisqurdp/Nfr) < 1 && nreds < nupds))
-        
-        fprintf('Chi2 increased. Reducing step size by factor of 2.\n');
-        nreds = nreds + 1;
-        fprintf('Reduction number: %d\n', nreds);
-        
-        % reduce step by a factor of 2, and add it in
-        dvs = dvs/2;
-        vsv = vsv_guess + dvs';
-        if (pratioflag == 1)
-            vpv = vpvsratio*vsv;
-        else
-        end
-        
-        % call the sensitivity function to compute U
-        [U, snsmf_vstot] = raylee_sensitivity(Nn,vsv,vpv,...
-            rhov,fksr,h,modnr,vflgr,...
-            Nnf,vpfv,rhofv,hfv,pratioflag);
-        
-        % check for NaNs
-        [U, U_datar, fksr, fksri, modnr, vflgr, snsmf_vstot] = ...
-            check_nans(U, U_datar, fksr, modnr, vflgr, snsmf_vstot);
-        
-        % if number of NaNs changed recompute data and model covariances
-        if (length(fksr) ~= Nfr)
-            Nfr = length(fksr);
-            msigma = mean(U_data_errs(fksri))*msigmaf;
-            mcm = (msigma^2)*exp(-abs(repmat(hs,Nn,1)-repmat(hs',1,Nn))/lsmth);
-            mcmisr = sqrtm(inv(mcm));
-            dcm = diag(U_data_errs(fksri).^2);
-            dcmisr = diag(1./U_data_errs(fksri));
-        else
-        end
-        
-        % the rms of this potential update
-        rmserrorp = sqrt(mean(((U-U_datar)./1).^2));
-        % the chi^2 of this potential update
-        chisqurdp = (U-U_datar)*dcmisr*dcmisr*transpose(U-U_datar);
-        
-    end
-    
-    % shear velocity must be greater than zero
-    if (sum(vsv <= 0) > 0)
-        error('Negative shear velocity values encountered in inversion');
-    else
-    end
-    % poisson's ratio between two bounds
-    pratio = (vpv.^2 - 2*(vsv.^2))./(2*(vpv.^2 - vsv.^2));
-    if ((sum(pratio <= -1) > 0) || (sum(pratio >= 0.5) > 0))
-        error('Impossible Poisson ratio values encountered in inversion');
-    else
-    end
-    
-    % the updated model, print number of update to screen
-    nupdat = 1;
-    fprintf('\nModel update (nupdat): %d\n', nupdat);
-    vsv_update(nupdat,:) = vsv;
-    
-    % the rms of this update
-    rmserror(nupdat+1) = rmserrorp;
-    % the chi^2 of this update
-    chisqurd(nupdat+1) = chisqurdp;
     
 end
 
-% now full modeling
+% assert shear velocity must be greater than zero
+assert( sum(vsv <= 0) == 0, ...
+    'Negative shear velocity values encountered in inversion');
+% assert that poisson's ratio is between two bounds
+pratio = (vpv.^2 - 2*(vsv.^2))./(2*(vpv.^2 - vsv.^2));
+assert( sum(pratio >= 0.5) == 0, ... % upper bound
+    'Impossible HIGH Poisson ratio values encountered in inversion');
+assert( sum(pratio <= -1) == 0, ... % lower bound
+    'Impossible LOW Poisson ratio values encountered in inversion');
+
+% the updated model, print number of update to screen
+nupdat = 1;
+fprintf('\nModel update (nupdat): %d\n', nupdat);
+vsv_update(nupdat,:) = vsv;
+
+% the rms of this update
+rmserror(nupdat+1) = rmserrorp;
+% the chi^2 of this update
+chisqurd(nupdat+1) = chisqurdp;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% now full modeling and interative inversion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 [U, snsmf_vstot] = raylee_sensitivity(Nn,vsv,vpv,...
     rhov,fks,h,modn,vflg,...
     Nnf,vpfv,rhofv,hfv,pratioflag);
@@ -471,17 +462,15 @@ while ((chisqurdp/Nfr) > chihi && nupdat < nupds )
         
     end
     
-    % shear velocity must be greater than zero
-    if (sum(vsv <= 0) > 0)
-        error('Negative shear velocity values encountered in inversion');
-    else
-    end
-    % poisson's ratio between two bounds
+    % assert shear velocity must be greater than zero
+    assert( sum(vsv <= 0) == 0, ...
+        'Negative shear velocity values encountered in inversion');
+    % assert that poisson's ratio is between two bounds
     pratio = (vpv.^2 - 2*(vsv.^2))./(2*(vpv.^2 - vsv.^2));
-    if ((sum(pratio <= -1) > 0) || (sum(pratio >= 0.5) > 0))
-        error('Impossible Poisson ratio values encountered in inversion');
-    else
-    end
+    assert( sum(pratio >= 0.5) == 0, ... % upper bound
+        'Impossible HIGH Poisson ratio values encountered in inversion');
+    assert( sum(pratio <= -1) == 0, ... % lower bound
+        'Impossible LOW Poisson ratio values encountered in inversion');
     
     % the next updated model, print number of update to screen
     nupdat = nupdat + 1;
@@ -534,15 +523,15 @@ save_vs_model(vsv_update(nupdat,:), hss, output_path, 'final');
 % end the timer
 % toc
 
-sprintf('%d of %d measurements used',Nfr,Nf-sum(isnan(U_data)))
+fprintf('%d of %d measurements used.\n', Nfr, Nf - sum( isnan(U_data) ) );
 
 if ((chisqurd(nupdat+1)/Nfr) > chihi)
-    sprintf('WARNING: Inversion did not converge to stopping criterion and underfitted data. Increase number of updates.')
+    fprintf('WARNING: Inversion did not converge to stopping criterion and underfitted data. Increase number of updates.\n')
 else
 end
 
 if ((chisqurd(nupdat+1)/Nfr) < chilo)
-    sprintf('WARNING: Inversion did not converge to stopping criterion and overfitted data. Increase number of reduction steps.')
+    fprintf('WARNING: Inversion did not converge to stopping criterion and overfitted data. Increase number of reduction steps.\n')
 else
 end
 
