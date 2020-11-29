@@ -98,13 +98,15 @@
 % % time this
 % tic
 
-function raylee_invert
+function raylee_invert( node )
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % begin input
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 file_path = 'raylee_input_files';
+% append the node number
+file_path = fullfile( file_path, num2str(node,'%05d') );
 
 % Get the data "PATH/files"
 [ifil, efil, ffil, mfil, vfil] = get_data_files(file_path);
@@ -188,6 +190,11 @@ output_path = 'raylee_output_files';
 if ~isfolder(output_path)
     mkdir(output_path);
 end
+% append the node number
+output_path = fullfile(output_path,num2str(node,'%05d'));
+if ~isfolder(output_path)
+    mkdir(output_path);
+end
 
 % compute sensitivity kernel using initial guess
 [U, snsmf_vstot] = raylee_sensitivity(Nn,vsv,vpv,...
@@ -224,10 +231,12 @@ Nfrv(1) = Nfr;
 % assert that initial guess chi^2 must be larger than 1
 assert( (chisqurd(1)/Nfr) > chilo, ...
     'Initial model fits data to less than 1 chi-squared');
-% assert that initial guess chi^2 must be larger than chihi window
-assert( (chisqurd(1)/Nfr) > chihi, ...
-    'Initial model fits data within acceptable chi-squared window');
-
+% assert that initial guess chi^2 must be larger than chi-hi value
+% assert( (chisqurd(1)/Nfr) > chihi, ...
+%     'Initial model fits data within acceptable chi-squared window');
+if (chisqurd(1)/Nfr) <= chihi
+    warning('Initial model fits data within acceptable chi-squared window');
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % invert using damped least squares method of Tarantola and Valette (1982)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
